@@ -1,0 +1,9 @@
+build/
+out/
+.vscode/
+.vs/
+*.exe
+*.obj
+*.o
+*.a
+*.lib
