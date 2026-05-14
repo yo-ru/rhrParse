@@ -29,17 +29,17 @@ namespace rhr {
 // One cursor sample. Rhythia writes one of these per game tick.
 struct ReplayFrame
 {
-    float    time;       // milliseconds since map start
-    float    positionX;  // playfield-space x (note grid is centred on 0)
-    float    positionY;  // playfield-space y
-    float    health;     // 0..1, player health at this tick
-    uint8_t  isHit;      // non-zero if a note was hit this tick
+    int32_t  time;             // milliseconds since map start (float in versions < kVersionInt32Time)
+    float    positionX;        // playfield-space x (note grid is centred on 0)
+    float    positionY;        // playfield-space y
+    float    health;           // 0..1, player health at this tick
+    uint8_t  isImportantFrame; // non-zero if this tick is flagged important (e.g. note hit)
 
-    // The wire format packs the frame as 4 floats followed by 1 byte
-    // (no padding) — 17 bytes total. The in-memory struct may have
-    // trailing alignment padding, which is why we don't memcpy the
+    // The wire format packs the frame as 4 four-byte fields followed by
+    // 1 byte (no padding) — 17 bytes total. The in-memory struct may
+    // have trailing alignment padding, which is why we don't memcpy the
     // whole frame at once.
-    static constexpr std::size_t kWireSize = sizeof(float) * 4 + sizeof(uint8_t);
+    static constexpr std::size_t kWireSize = 4 * 4 + sizeof(uint8_t);
 };
 static_assert(ReplayFrame::kWireSize == 17, "ReplayFrame wire format must be 17 bytes");
 
@@ -87,9 +87,13 @@ struct Replay
 //                             encoder skips them
 //   < kVersionFailTime      : scoreData.failTime isn't in the wire data;
 //                             defaulted to -1 / failed=false
+//   < kVersionInt32Time     : ReplayFrame.time is stored as float ms
+//                             instead of int32 ms; the parser converts
+//                             transparently on both decode and encode
 constexpr int32_t kVersionNegateY        = 20260118;
 constexpr int32_t kVersionExtendedFields = 20260125;
 constexpr int32_t kVersionFailTime       = 20260222;
+constexpr int32_t kVersionInt32Time      = 20260510;
 
 // Decode `size` bytes at `data` into `out`. Returns false on any
 // truncation or invalid length. On false return, `out` is left in an
@@ -101,7 +105,7 @@ bool Parse(const std::vector<uint8_t>& data, Replay& out);
 
 // Encode `replay` into a fresh byte buffer. The output uses the wire
 // format selected by `replay.version` — set it to the latest constant
-// (kVersionFailTime) for new files.
+// (kVersionInt32Time) for new files.
 std::vector<uint8_t> Encode(const Replay& replay);
 
 } // namespace rhr

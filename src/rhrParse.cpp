@@ -214,14 +214,17 @@ bool Parse(const uint8_t* data, std::size_t size, Replay& out)
     if (frameCount < 0) return false;
     if (!r.has(static_cast<std::size_t>(frameCount) * ReplayFrame::kWireSize)) return false;
 
+    const bool int32Time = out.version >= kVersionInt32Time;
     out.frames.resize(static_cast<std::size_t>(frameCount));
     for (auto& f : out.frames)
     {
-        f.time      = r.readFloat();
-        f.positionX = r.readFloat();
-        f.positionY = r.readFloat();
-        f.health    = r.readFloat();
-        f.isHit     = r.readU8();
+        f.time             = int32Time
+                                ? r.readInt32()
+                                : static_cast<int32_t>(r.readFloat());
+        f.positionX        = r.readFloat();
+        f.positionY        = r.readFloat();
+        f.health           = r.readFloat();
+        f.isImportantFrame = r.readU8();
     }
 
     if (!r.valid()) return false;
@@ -267,14 +270,16 @@ std::vector<uint8_t> Encode(const Replay& replay)
 
     w.writeInt32(static_cast<int32_t>(replay.frames.size()));
 
-    const bool negateY = replay.version < kVersionNegateY;
+    const bool negateY   = replay.version < kVersionNegateY;
+    const bool int32Time = replay.version >= kVersionInt32Time;
     for (const auto& f : replay.frames)
     {
-        w.writeFloat(f.time);
+        if (int32Time) w.writeInt32(f.time);
+        else           w.writeFloat(static_cast<float>(f.time));
         w.writeFloat(f.positionX);
         w.writeFloat(negateY ? -f.positionY : f.positionY);
         w.writeFloat(f.health);
-        w.writeU8(f.isHit);
+        w.writeU8(f.isImportantFrame);
     }
 
     return w.take();

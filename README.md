@@ -73,10 +73,10 @@ See [`examples/dump.cpp`](examples/dump.cpp) for a complete CLI utility.
 |---|---|
 | `rhr::Replay` | Top-level record: `version`, `scoreData`, `frames`. |
 | `rhr::ScoreData` | Per-run metadata (player, map, score, mods, etc.). |
-| `rhr::ReplayFrame` | One cursor sample (`time`, `positionX/Y`, `health`, `isHit`). |
+| `rhr::ReplayFrame` | One cursor sample (`time`, `positionX/Y`, `health`, `isImportantFrame`). |
 | `rhr::Parse(bytes, out)` | Decode bytes into a `Replay`. Returns `false` on truncation/invalid input. |
 | `rhr::Encode(replay)` | Encode a `Replay` to `std::vector<uint8_t>` in the format chosen by `replay.version`. |
-| `rhr::kVersionFailTime` etc. | Format-version constants. Set `replay.version` to one of these when synthesising replays. |
+| `rhr::kVersionInt32Time` etc. | Format-version constants. Set `replay.version` to one of these when synthesising replays. |
 
 All API surface is documented inline in [`rhrParse.h`](include/rhrParse/rhrParse.h).
 
@@ -110,11 +110,11 @@ int32   failTime                    ; -1 if not failed
 
 int32   frameCount
 frame[] frames                      ; frameCount * 17 bytes each
-    float  time
+    int32  time                     ; older versions (< 20260510) store this as float
     float  positionX
     float  positionY                ; older versions (< 20260118) store this negated
     float  health
-    uint8  isHit
+    uint8  isImportantFrame
 ```
 
 ## Versioning
@@ -124,8 +124,9 @@ frame[] frames                      ; frameCount * 17 bytes each
 | `< 20260118` | `positionY` is stored with the opposite sign. The parser handles this transparently on both decode and encode. |
 | `< 20260125` | The extended-fields block (`passed`/`mods`/`spin`/`speed`/`totalScore`) isn't in the wire data; defaults are filled in. |
 | `< 20260222` | `failTime` isn't in the wire data; defaults to `-1`. |
+| `< 20260510` | Frame `time` is stored as `float` instead of `int32`. The parser converts transparently in both directions. |
 
-Encoding always writes the format implied by the `version` you set on the `Replay`. Use `rhr::kVersionFailTime` for new files.
+Encoding always writes the format implied by the `version` you set on the `Replay`. Use `rhr::kVersionInt32Time` for new files.
 
 ## License
 
