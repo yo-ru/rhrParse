@@ -208,6 +208,9 @@ bool Parse(const uint8_t* data, std::size_t size, Replay& out)
         sd.failed   = sd.failTime >= 0;
     }
 
+    if (out.version >= kVersionBeatmapHash)
+        sd.beatmapHash = r.readString();
+
     if (!r.valid()) return false;
 
     int32_t frameCount = r.readInt32();
@@ -267,6 +270,9 @@ std::vector<uint8_t> Encode(const Replay& replay)
 
     if (replay.version >= kVersionFailTime)
         w.writeInt32(sd.failed ? sd.failTime : -1);
+
+    if (replay.version >= kVersionBeatmapHash)
+        w.writeString(sd.beatmapHash);
 
     w.writeInt32(static_cast<int32_t>(replay.frames.size()));
 

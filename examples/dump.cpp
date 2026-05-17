@@ -39,11 +39,13 @@ int main(int argc, char** argv)
     std::printf("Played at:   %s\n",   sd.datePlayed.c_str());
     std::printf("Player:      %s\n",   sd.playerName.c_str());
     std::printf("Map:         %s (id %d)\n", sd.legacyMapId.c_str(), sd.mapId);
+    if (!sd.beatmapHash.empty())
+        std::printf("Beatmap hash:%s\n", sd.beatmapHash.c_str());
     std::printf("Mode:        %s\n",   sd.mode.c_str());
     std::printf("Mods:        %s\n",   sd.mods.c_str());
     std::printf("Speed:       %.2fx\n", sd.speed);
     std::printf("Score:       %lld\n", static_cast<long long>(sd.totalScore));
-    std::printf("Accuracy:    %.2f%%\n", sd.accuracy * 100.0f);
+    std::printf("Accuracy:    %.2f%%\n", sd.accuracy);
     std::printf("Hits/Misses: %d / %d\n", sd.hits, sd.misses);
     std::printf("Passed:      %s\n", sd.passed ? "yes" : "no");
     if (sd.failed)

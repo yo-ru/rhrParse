@@ -49,7 +49,7 @@ static_assert(ReplayFrame::kWireSize == 17, "ReplayFrame wire format must be 17 
 struct ScoreData
 {
     int64_t      timestamp     = 0;     // .NET DateTime ticks (100ns since 0001-01-01 UTC)
-    std::string  datePlayed;             // decoded local-time string "YYYY/MM/DD HH:MM:SS" (decode only)
+    std::string  datePlayed;            // decoded local-time string "YYYY/MM/DD HH:MM:SS" (decode only)
     std::string  playerName;
     std::string  legacyMapId;
     int32_t      mapId         = 0;
@@ -66,6 +66,7 @@ struct ScoreData
     float        points        = 0.0f;
     int32_t      failTime      = -1;    // ms into the map where the player failed, or -1
     bool         failed        = false; // synthesised from failTime >= 0 (decode only)
+    std::string  beatmapHash;           // content hash of the played beatmap (added in kVersionBeatmapHash)
 };
 
 struct Replay
@@ -90,10 +91,13 @@ struct Replay
 //   < kVersionInt32Time     : ReplayFrame.time is stored as float ms
 //                             instead of int32 ms; the parser converts
 //                             transparently on both decode and encode
+//   < kVersionBeatmapHash   : scoreData.beatmapHash isn't in the wire
+//                             data; defaulted to empty string
 constexpr int32_t kVersionNegateY        = 20260118;
 constexpr int32_t kVersionExtendedFields = 20260125;
 constexpr int32_t kVersionFailTime       = 20260222;
 constexpr int32_t kVersionInt32Time      = 20260510;
+constexpr int32_t kVersionBeatmapHash    = 20260517;
 
 // Decode `size` bytes at `data` into `out`. Returns false on any
 // truncation or invalid length. On false return, `out` is left in an
@@ -105,7 +109,7 @@ bool Parse(const std::vector<uint8_t>& data, Replay& out);
 
 // Encode `replay` into a fresh byte buffer. The output uses the wire
 // format selected by `replay.version` — set it to the latest constant
-// (kVersionInt32Time) for new files.
+// (kVersionBeatmapHash) for new files.
 std::vector<uint8_t> Encode(const Replay& replay);
 
 } // namespace rhr
